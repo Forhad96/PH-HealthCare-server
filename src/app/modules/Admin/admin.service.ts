@@ -1,9 +1,10 @@
-import { Prisma, PrismaClient } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { adminSearchAbleFields } from "./admin.constant";
-const prisma = new PrismaClient();
+import calculatePagination from "../helpers/calculatePagination";
+import prisma from "../shared/prisma";
 
 const getAllAdmin = async (params: any, options: any) => {
-  const { page, limit } = options;
+  const { page, limit, skip } = calculatePagination(options);
   const { searchTerm, ...additionalFilters } = params;
 
   // Log additional filters for debugging purposes
@@ -39,19 +40,33 @@ const getAllAdmin = async (params: any, options: any) => {
   }
 
   // Construct the final query condition
-  const finalQueryCondition: Prisma.AdminWhereInput = { AND: queryConditions };
+  const whereQueryCondition: Prisma.AdminWhereInput = { AND: queryConditions };
 
   // Execute the query with the constructed conditions
-  const admins = await prisma.admin.findMany({
-    where: finalQueryCondition,
-    skip: (Number(page) - 1) * Number(limit),
-    take: Number(limit),
+  const result = await prisma.admin.findMany({
+    where: whereQueryCondition,
+    skip,
+    take: limit,
+    orderBy: {
+      [options.sortBy]: options.sortOrder,
+    },
   });
-
+  const total = await prisma.admin.count({
+    where: whereQueryCondition,
+  });
   // Return the result of the query
-  return admins;
+  return {
+    meta: { page, limit, total },
+    data: result,
+  };
 };
-
+const getAdminById = async (id: string) => {
+  const result = await prisma.admin.findUnique({
+    where: { id },
+  });
+  return result
+};
 export const AdminServices = {
   getAllAdmin,
+  getAdminById,
 };

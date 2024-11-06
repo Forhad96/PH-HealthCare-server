@@ -7,5 +7,6 @@ const prisma =  new PrismaClient()
 const router = Router()
 
 router.get('/',AdminController.getAllAdminHandler)
+router.get('/:id',AdminController.getAdminByIdHandler)
 
 export const AdminRoutes = router;
