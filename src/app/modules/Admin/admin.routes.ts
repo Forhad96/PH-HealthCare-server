@@ -1,12 +1,13 @@
 import { PrismaClient } from "@prisma/client";
-import { Request, Response, Router } from "express";
+import { Router } from "express";
 import { AdminController } from "./admin.controller";
 
-const prisma =  new PrismaClient()
+const prisma = new PrismaClient();
 
-const router = Router()
+const router = Router();
 
-router.get('/',AdminController.getAllAdminHandler)
-router.get('/:id',AdminController.getAdminByIdHandler)
+router.get("/", AdminController.getAllFromDB);
+router.get("/:id", AdminController.getByIdFromDB);
+router.patch("/:id", AdminController.updateIntoDB);
 
 export const AdminRoutes = router;
