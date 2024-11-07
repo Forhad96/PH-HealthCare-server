@@ -3,7 +3,7 @@ import { adminSearchAbleFields } from "./admin.constant";
 import calculatePagination from "../helpers/calculatePagination";
 import prisma from "../shared/prisma";
 
-const getAllFromDB = async (params: any, options: any): Promise<Admin|null > => {
+const getAllFromDB = async (params: any, options: any) => {
   const { page, limit, skip } = calculatePagination(options);
   const { searchTerm, ...additionalFilters } = params;
 
