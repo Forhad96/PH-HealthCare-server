@@ -4,7 +4,10 @@ import { AuthServices } from "./auth.service";
 
 const loginUser = catchAsync(async (req, res) => {
   const result = await AuthServices.loginUser(req.body);
-  res.cookie("refreshToken", result.refreshToken);
+  res.cookie("refreshToken", result.refreshToken,{
+    secure:true,
+    httpOnly:true,
+  });
   sendResponse(res, {
     statusCode: 200,
     success: true,
@@ -15,7 +18,25 @@ const loginUser = catchAsync(async (req, res) => {
     },
   });
 });
+const refreshToken = catchAsync(async (req, res) => {
+  const {refreshToken} = req.cookies
+  const result = await AuthServices.refreshToken(refreshToken);
+  
+
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "User login successful",
+    data: result
+    // data: {
+    //   accessToken: result.accessToken,
+    //   needPasswordChange: result.needPasswordChange,
+    // },
+  });
+});
 
 export const AuthController = {
   loginUser,
+  refreshToken
 };
