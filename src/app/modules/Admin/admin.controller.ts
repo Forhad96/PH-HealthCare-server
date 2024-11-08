@@ -71,5 +71,3 @@ export const AdminController = {
 };
 
 
-
-// create middleware to validate request
