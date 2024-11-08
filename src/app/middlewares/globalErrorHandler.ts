@@ -8,7 +8,7 @@ const globalErrorHandler = (
 ) => {
   res.status(500).json({
     success: false,
-    message: err.message || "Something went wrong",
+    message: err.name || "Something went wrong",
     err,
   });
 };

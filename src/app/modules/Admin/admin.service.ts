@@ -1,67 +1,73 @@
 import { Admin, Prisma, UserStatus } from "@prisma/client";
 import { adminSearchAbleFields } from "./admin.constant";
-import calculatePagination from "../../../helpers/paginationHealper";
+import { paginationHelper } from "../../../helpers/paginationHealper";
 import prisma from "../../../shared/prisma";
+import { IAdminFilterRequest } from "./admin.interface";
+import { IPaginationOptions } from "../../interfaces/pagination";
 
-const getAllFromDB = async (params: any, options: any) => {
-  const { page, limit, skip } = calculatePagination(options);
-  const { searchTerm, ...additionalFilters } = params;
+const getAllFromDB = async (
+  params: IAdminFilterRequest,
+  options: IPaginationOptions
+) => {
+  console.log(options);
+  const { page, limit, skip } = paginationHelper.calculatePagination(options);
+  const { searchTerm, ...filterData } = params;
 
-  // Log additional filters for debugging purposes
-  //  console.log(additionalFilters);
+  const andConditions: Prisma.AdminWhereInput[] = [];
 
-  // Initialize an array to store all query conditions
-  const andQueryConditions: Prisma.AdminWhereInput[] = [];
-
-  // List of fields in the Admin table that can be searched
-  const searchableFields = adminSearchAbleFields;
-
-  // Add search conditions to the query if a searchTerm is provided
-  if (searchTerm) {
-    andQueryConditions.push({
-      OR: searchableFields.map((field) => ({
+  //console.log(filterData);
+  if (params.searchTerm) {
+    andConditions.push({
+      OR: adminSearchAbleFields.map((field) => ({
         [field]: {
-          contains: searchTerm,
-          mode: "insensitive", // Case-insensitive search
+          contains: params.searchTerm,
+          mode: "insensitive",
         },
       })),
     });
   }
 
-  // Add filter conditions for additional fields
-  if (Object.keys(additionalFilters).length > 0) {
-    andQueryConditions.push({
-      AND: Object.keys(additionalFilters).map((filterKey) => ({
-        [filterKey]: {
-          equals: additionalFilters[filterKey],
+  if (Object.keys(filterData).length > 0) {
+    andConditions.push({
+      AND: Object.keys(filterData).map((key) => ({
+        [key]: {
+          equals: (filterData as any)[key],
         },
       })),
     });
   }
-  andQueryConditions.push({
+
+  andConditions.push({
     isDeleted: false,
   });
 
-  // Construct the final query condition
-  const whereQueryCondition: Prisma.AdminWhereInput = {
-    AND: andQueryConditions,
-  };
+  //console.dir(andConditions, { depth: 'infinity' })
+  const whereConditions: Prisma.AdminWhereInput = { AND: andConditions };
 
-  // Execute the query with the constructed conditions
   const result = await prisma.admin.findMany({
-    where: whereQueryCondition,
+    where: whereConditions,
     skip,
     take: limit,
-    orderBy: {
-      [options.sortBy]: options.sortOrder,
-    },
+    orderBy:
+      options.sortBy && options.sortOrder
+        ? {
+            [options.sortBy]: options.sortOrder,
+          }
+        : {
+            createdAt: "desc",
+          },
   });
+
   const total = await prisma.admin.count({
-    where: whereQueryCondition,
+    where: whereConditions,
   });
-  // Return the result of the query
+
   return {
-    meta: { page, limit, total },
+    meta: {
+      page,
+      limit,
+      total,
+    },
     data: result,
   };
 };
