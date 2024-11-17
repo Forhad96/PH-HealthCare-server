@@ -7,6 +7,7 @@ import { config } from "../../config";
 import ApiError from "../../errors/ApiError";
 import httpStatus from "http-status";
 import emailSender from "./emailSender";
+import { hashPassword } from "../../../helpers/bcryptHelper";
 const loginUser = async (payload: { email: string; password: string }) => {
   const userData = await prisma.user.findUniqueOrThrow({
     where: {
@@ -115,7 +116,7 @@ const forgotPassword = async (payload: { email: string }) => {
       status: UserStatus.ACTIVE,
     },
   });
-  const resetPassToken = await jwtHelpers.generateToken(
+  const resetPassToken = jwtHelpers.generateToken(
     { email: userData.email, role: userData.role },
     config.jwt.reset_pass_token_secret as Secret,
     config.jwt.reset_pass_token_expires_in as string
@@ -123,7 +124,7 @@ const forgotPassword = async (payload: { email: string }) => {
 
   const resetPassLink =
     config.reset_pass_link + `?userId=${userData.id}&token=${resetPassToken}`;
-  const result=  await emailSender(
+  await emailSender(
     userData.email,
     `
       <div>
@@ -140,13 +141,49 @@ const forgotPassword = async (payload: { email: string }) => {
       `
   );
   return {
-    message:"Email send successfully"
-  }
+    message: "Email send successfully",
+  };
 };
 
+const resetPassword = async (
+  token: string,
+  payload: { id: string; newPassword: string }
+) => {
+  // console.log({ token, payload });
+
+  const userData = await prisma.user.findUniqueOrThrow({
+    where: {
+      id: payload.id,
+      status: UserStatus.ACTIVE,
+    },
+  });
+
+  const isValidToken = jwtHelpers.verifyToken(
+    token,
+    config.jwt.reset_pass_token_secret as Secret
+  );
+
+  if (!isValidToken) {
+    throw new ApiError(httpStatus.FORBIDDEN, "Forbidden!");
+  }
+
+  // hash password
+  const newHashedPassword = await hashPassword(payload.newPassword, 12);
+
+  // update into database
+  await prisma.user.update({
+    where: {
+      id: payload.id,
+    },
+    data: {
+      password: newHashedPassword,
+    },
+  });
+};
 export const AuthServices = {
   loginUser,
   refreshToken,
   changePassword,
   forgotPassword,
+  resetPassword,
 };
