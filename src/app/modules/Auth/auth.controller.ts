@@ -1,15 +1,16 @@
+import { Request, Response } from "express";
 import catchAsync from "../../../shared/catchAsync";
 import sendResponse from "../../../shared/sendResponse";
 import { AuthServices } from "./auth.service";
-
-const loginUser = catchAsync(async (req, res) => {
+import httpStatus from 'http-status';
+const loginUser = catchAsync(async (req:Request, res:Response) => {
   const result = await AuthServices.loginUser(req.body);
   res.cookie("refreshToken", result.refreshToken,{
-    secure:true,
+    secure:false,
     httpOnly:true,
   });
   sendResponse(res, {
-    statusCode: 200,
+    statusCode: httpStatus.OK,
     success: true,
     message: "User login successful",
     data: {
@@ -18,14 +19,15 @@ const loginUser = catchAsync(async (req, res) => {
     },
   });
 });
-const refreshToken = catchAsync(async (req, res) => {
+const refreshToken = catchAsync(async (req:Request, res:Response) => {
   const {refreshToken} = req.cookies
+  console.log(refreshToken);
   const result = await AuthServices.refreshToken(refreshToken);
   
 
 
   sendResponse(res, {
-    statusCode: 200,
+    statusCode: httpStatus.OK,
     success: true,
     message: "User login successful",
     data: result
@@ -36,7 +38,23 @@ const refreshToken = catchAsync(async (req, res) => {
   });
 });
 
+
+const changePassword = catchAsync(async (req:Request & {user?:any}, res:Response) => {
+  const {user} = req
+  const result = await AuthServices.changePassword(user,req.body);
+  
+
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Password change successfully",
+    data: result
+  });
+});
+
 export const AuthController = {
   loginUser,
-  refreshToken
+  refreshToken,
+  changePassword,
 };
