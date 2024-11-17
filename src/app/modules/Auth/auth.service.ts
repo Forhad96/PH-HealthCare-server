@@ -6,6 +6,7 @@ import jwt, { Secret } from "jsonwebtoken";
 import { config } from "../../config";
 import ApiError from "../../errors/ApiError";
 import httpStatus from "http-status";
+import emailSender from "./emailSender";
 const loginUser = async (payload: { email: string; password: string }) => {
   const userData = await prisma.user.findUniqueOrThrow({
     where: {
@@ -107,8 +108,45 @@ const changePassword = async (user: any, payload: any) => {
   };
 };
 
+const forgotPassword = async (payload: { email: string }) => {
+  const userData = await prisma.user.findUniqueOrThrow({
+    where: {
+      email: payload.email,
+      status: UserStatus.ACTIVE,
+    },
+  });
+  const resetPassToken = await jwtHelpers.generateToken(
+    { email: userData.email, role: userData.role },
+    config.jwt.reset_pass_token_secret as Secret,
+    config.jwt.reset_pass_token_expires_in as string
+  );
+
+  const resetPassLink =
+    config.reset_pass_link + `?userId=${userData.id}&token=${resetPassToken}`;
+  const result=  await emailSender(
+    userData.email,
+    `
+      <div>
+          <p>Dear User,</p>
+          <p>Your password reset link 
+              <a href=${resetPassLink}>
+                  <button>
+                      Reset Password
+                  </button>
+              </a>
+          </p>
+
+      </div>
+      `
+  );
+  return {
+    message:"Email send successfully"
+  }
+};
+
 export const AuthServices = {
   loginUser,
   refreshToken,
   changePassword,
+  forgotPassword,
 };
