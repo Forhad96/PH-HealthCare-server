@@ -5,7 +5,11 @@ import { UserRole } from "@prisma/client";
 import { fileUploader } from "../../../helpers/fileUploader";
 import { z } from "zod";
 import { UserValidationSchemas } from "./user.validation";
+import validateRequest from "../../middlewares/validateRequeast";
 const router = Router();
+
+
+router.get("/", auth(UserRole.ADMIN,UserRole.SUPER_ADMIN) ,userController.getAllFromDB);
 
 router.post(
   "/create-admin",
@@ -33,7 +37,6 @@ router.post(
 );
 router.post(
   "/create-patient",
-  auth(UserRole.ADMIN, UserRole.SUPER_ADMIN),
   fileUploader.upload.single("file"),
   (req: Request, res: Response, next: NextFunction) => {
 
@@ -43,5 +46,10 @@ router.post(
     return userController.createPatient(req, res, next);
   }
 );
-
+router.patch(
+  '/:id/status',
+  auth(UserRole.SUPER_ADMIN, UserRole.ADMIN),
+  validateRequest(UserValidationSchemas.zUpdateStatus),
+  userController.changeProfileStatus
+)
 export const UserRoutes = router;
