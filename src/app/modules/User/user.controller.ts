@@ -1,23 +1,37 @@
 import { Request, Response } from "express";
 import { userServices } from "./user.service";
-// import httpStatus from 'http-status';
-const createAdminHandle = async (req: Request, res: Response) => {
-  try {
-    const result = await userServices.createAdmin(req.body);
-    res.status(200).json({
+import catchAsync from "../../../shared/catchAsync";
+import httpStatus from 'http-status';
+const createAdmin =catchAsync( async (req: Request, res: Response) => {
+
+    const result = await userServices.createAdmin(req);
+    res.status(httpStatus.OK).json({
       success: true,
       message: "Admin created successfully",
       data: result,
     });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: error.message || "Something went wrong",
-      error,
+})
+const createDoctor =catchAsync( async (req: Request, res: Response) => {
+
+    const result = await userServices.createDoctor(req);
+    res.status(httpStatus.OK).json({
+      success: true,
+      message: "Doctor created successfully",
+      data: result,
     });
-  }
-};
+})
+const createPatient =catchAsync( async (req: Request, res: Response) => {
+
+    const result = await userServices.createPatient(req);
+    res.status(httpStatus.OK).json({
+      success: true,
+      message: "Patient created successfully",
+      data: result,
+    });
+})
 
 export const userController = {
-  createAdminHandle,
+  createAdmin,
+  createDoctor,
+  createPatient,
 };

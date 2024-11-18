@@ -7,7 +7,8 @@ import { config } from "../../config";
 import ApiError from "../../errors/ApiError";
 import httpStatus from "http-status";
 import emailSender from "./emailSender";
-import { hashPassword } from "../../../helpers/bcryptHelper";
+import { generateHashedPassword } from "../../../helpers/bcryptHelper";
+
 const loginUser = async (payload: { email: string; password: string }) => {
   const userData = await prisma.user.findUniqueOrThrow({
     where: {
@@ -168,7 +169,7 @@ const resetPassword = async (
   }
 
   // hash password
-  const newHashedPassword = await hashPassword(payload.newPassword, 12);
+  const newHashedPassword = await generateHashedPassword(payload.newPassword, 12);
 
   // update into database
   await prisma.user.update({
