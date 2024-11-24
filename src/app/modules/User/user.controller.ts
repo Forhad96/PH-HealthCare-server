@@ -5,6 +5,7 @@ import httpStatus from "http-status";
 import pick from "../../../shared/pick";
 import { userSearchAbleFields } from "./user.constant";
 import sendResponse from "../../../shared/sendResponse";
+import { IAuthUser } from "../../interfaces/common";
 const createAdmin = catchAsync(async (req: Request, res: Response) => {
   const result = await userServices.createAdmin(req);
   res.status(httpStatus.OK).json({
@@ -44,7 +45,7 @@ const getAllFromDB = catchAsync(async (req, res) => {
   });
 });
 const changeProfileStatus = catchAsync(async (req, res) => {
-    const { id } = req.params;
+  const { id } = req.params;
   const result = await userServices.changeProfileStatus(id, req.body);
 
   sendResponse(res, {
@@ -54,11 +55,38 @@ const changeProfileStatus = catchAsync(async (req, res) => {
     data: result,
   });
 });
+const getMyProfile = catchAsync(
+  async (req: Request & { user?: IAuthUser }, res: Response) => {
+    const user = req.user;
+    const result = await userServices.getMyProfile(user as IAuthUser);
 
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "My Profile data faced  successfully",
+      data: result,
+    });
+  }
+);
+const updateMyProfile = catchAsync(async (req: Request & { user?: IAuthUser }, res: Response) => {
+
+  const user = req.user;
+
+  const result = await userServices.updateMyProfile(user as IAuthUser, req);
+
+  sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "My profile updated!",
+      data: result
+  })
+});
 export const userController = {
   createAdmin,
   createDoctor,
   createPatient,
   getAllFromDB,
   changeProfileStatus,
+  getMyProfile,
+  updateMyProfile,
 };
