@@ -1,9 +1,10 @@
 import { addHours, addMinutes, format } from "date-fns";
-import { ISchedule } from "./schedule.interface";
+import { IFilterRequest, ISchedule } from "./schedule.interface";
 import { Prisma, Schedule } from "@prisma/client";
 import prisma from "../../../shared/prisma";
 import { paginationHelper } from "../../../helpers/paginationHealper";
 import { IAuthUser } from "../../interfaces/common";
+import { IPaginationOptions } from "../../interfaces/pagination";
 
 export const createSchedule = async (
   payload: ISchedule
@@ -66,7 +67,7 @@ export const createSchedule = async (
   }
   return schedules;
 };
-const getAllFromDB = async (filters: any, options: any, user: IAuthUser) => {
+const getAllFromDB = async (filters: IFilterRequest, options: IPaginationOptions, user: IAuthUser) => {
   const { limit, page, skip } = paginationHelper.calculatePagination(options);
   const { startDate,endDate, ...filterData } = filters;
   console.log("time",startDate,endDate);
